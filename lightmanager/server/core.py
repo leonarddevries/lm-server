@@ -6,6 +6,7 @@ The core module loads all dependent modules and runs the whole package.
 Author: Leonard de Vries
 Created: 12-07-2016
 """
+import json
 import logging
 import time
 import tornado
@@ -19,6 +20,8 @@ import common.log
 common.log.setup_logging()
 logger = logging.getLogger(__name__)
 
+accepted_tokens = ["flb9asd0f9aop9b9a8sd6b986eb9879cd898b"]
+
 
 class LightManagerServer:
     def __init__(self):
@@ -30,15 +33,28 @@ class LightManagerServer:
 
 
 class WSHandler(tornado.websocket.WebSocketHandler):
+    authenticated = False
+
     def open(self):
-        print 'new connection'
-        self.write_message("Hello World")
+        logger.info("New connection accepted")
+        self.write_message(json.dumps("AUTH"))
 
     def on_message(self, message):
-        print 'message received %s' % message
+        if not self.authenticated:
+            if str(message).startswith("KEY:"):
+                if str(message).split(":")[1] in accepted_tokens:
+                    self.authenticated = True
+                    logger.info("Client successfully authenticated!")
+                    self.write_message("AUTH_OK")
+                else:
+                    logger.warning("Client denied on key")
+            else:
+                logger.warning("Received message while not authenticated!")
+        else:
+            logger.info('message received %s' % message)
 
     def on_close(self):
-        print 'connection closed'
+        logger.info('connection closed')
 
 
 def run():
