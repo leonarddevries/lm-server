@@ -69,6 +69,7 @@ def run():
 
     http_server = tornado.httpserver.HTTPServer(application)
     http_server.listen(8888)
+    http_server.xheaders = True
     tornado.ioloop.IOLoop.instance().start()
 
 
