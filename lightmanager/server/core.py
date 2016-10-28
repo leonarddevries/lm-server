@@ -18,7 +18,7 @@ import tornado.websocket
 import common.log
 
 common.log.setup_logging()
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("core")
 
 accepted_tokens = ["flb9asd0f9aop9b9a8sd6b986eb9879cd898b"]
 
@@ -35,6 +35,9 @@ class LightManagerServer:
 class WSHandler(tornado.websocket.WebSocketHandler):
     authenticated = False
 
+    def check_origin(self, origin):
+        return True
+
     def open(self):
         logger.info("New connection accepted")
         self.write_message(json.dumps("AUTH"))
@@ -50,8 +53,9 @@ class WSHandler(tornado.websocket.WebSocketHandler):
                     logger.warning("Client denied on key")
             else:
                 logger.warning("Received message while not authenticated!")
+                self.close(code=4000, reason="Unauthorized")
         else:
-            logger.info('message received %s' % message)
+            logger.debug('message received %s' % message)
 
     def on_close(self):
         logger.info('connection closed')
